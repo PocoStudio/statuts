@@ -2,49 +2,58 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="3;url=statuts.html"> <!-- Redirection après 3 secondes -->
-    <title>Chargement...</title>
+    <meta http-equiv="refresh" content="3;url=statuts.html">
+    <title>Redirection</title>
     <style>
-        /* Style de base de la page */
         body {
+            font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #f4f4f4;
-            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
         }
-
-        /* Style du loader */
+        .loader-container {
+            margin-bottom: 20px;
+        }
         .loader {
-            border: 16px solid #f3f3f3; /* Couleur de fond */
-            border-top: 16px solid #3498db; /* Couleur de la barre de chargement */
-            border-radius: 50%;
-            width: 120px;
-            height: 120px;
-            animation: spin 2s linear infinite; /* Animation de rotation */
+            width: 200px;
+            height: 6px;
+            background-color: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
         }
-
-        /* Animation de rotation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .loader-bar {
+            height: 100%;
+            width: 0;
+            background-color: #4a90e2;
+            animation: loading 2.5s linear forwards;
         }
-
-        /* Texte au centre du loader */
-        .message {
-            text-align: center;
-            font-size: 18px;
-            color: #333;
-            margin-top: 20px;
+        p {
+            color: #555;
+        }
+        a {
+            color: #0077ff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @keyframes loading {
+            0% { width: 0; }
+            100% { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div>
-        <div class="loader"></div>
-        <div class="message">Redirection en cours vers <strong>les statuts ...</strong>...</div>
+    <div class="loader-container">
+        <div class="loader">
+            <div class="loader-bar"></div>
+        </div>
     </div>
+    <p>Redirection vers les <a href="statuts.html">statuts</a> en cours...</p>
 </body>
 </html>
