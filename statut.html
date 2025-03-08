@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statut des services Capiomont</title>
+    <style>
+        :root {
+            --color-bg: #f0f4f8;
+            --color-text: #334155;
+            --color-primary: #3498db;
+            --color-primary-hover: #1d4ed8;
+            --color-online: #10b981;
+            --color-offline: #ef4444;
+            --color-unknown: #f59e0b;
+            --color-card: #fff;
+            --color-shadow: rgba(0, 0, 0, 0.08);
+            --color-header-text: #3498db;
+            --color-footer-bg: #f1f5f9;
+            --color-footer-text: #64748b;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            color: var(--color-header-text);
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            flex: 1;
+        }
+        
+        .dashboard {
+            margin: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            width: 100%; 
+        }
+        
+        .dashboard-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .last-updated {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 1.5rem;
+            width: 100%;
+        }
+        
+        .status-card {
+            background: var(--color-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--color-shadow);
+            padding: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .site-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .site-url {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 1.2rem;
+            word-break: break-all;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            position: relative;
+        }
+        
+        .online .status-dot { 
+            background-color: var(--color-online); 
+            box-shadow: 0 0 10px var(--color-online);
+        }
+        
+        .offline .status-dot { 
+            background-color: var(--color-offline); 
+            box-shadow: 0 0 10px var(--color-offline);
+        }
+        
+        .unknown .status-dot { 
+            background-color: var(--color-unknown); 
+            box-shadow: 0 0 10px var(--color-unknown);
+        }
+
+        .Maintenance .status-dot { 
+            background-color: #f59e0b; 
+            box-shadow: 0 0 10px #f59e0b;
+        }
+
+        .ERR .status-dot { 
+            background-color: #383636; 
+            box-shadow: 0 0 10px #383636;
+        }
+        
+        .status-text { 
+            font-weight: 600; 
+        }
+        
+        .online .status-text { color: var(--color-online); }
+        .offline .status-text { color: var(--color-offline); }
+        .unknown .status-text { color: var(--color-unknown); }
+        .Maintenance .status-text { color: #f39c12; }
+        .ERR .status-text { color: #383636; }
+        
+        .http-code {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+        
+        .card-decoration {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 5px;
+            width: 100%;
+        }
+        
+        .online .card-decoration { background-color: var(--color-online); }
+        .offline .card-decoration { background-color: var(--color-offline); }
+        .unknown .card-decoration { background-color: var(--color-unknown); }
+        .Maintenance .card-decoration { background-color: #f39c12; }
+        .ERR .card-decoration { background-color: #383636; }
+        
+        .refresh-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 2rem;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        
+        .refresh-button:hover {
+            background: var(--color-primary-hover);
+            box-shadow: 0 6px 10px rgba(29, 78, 216, 0.25);
+        }
+        
+        .refresh-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .refresh-button .icon {
+            margin-right: 0.5rem;
+        }
+        
+        /* Footer styles */
+        .footer {
+            background-color: var(--color-footer-bg);
+            color: var(--color-footer-text);
+            padding: 1.5rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: auto; 
+            width: 100%;
+        }
+        
+        .footer a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--color-primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-text {
+            color: var(--color-text);
+            font-weight: 500;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr); 
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .status-grid {
+                grid-template-columns: 1fr; 
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Vérification des services en cours...</div>
+    </div>
+    
+    <header class="header">
+        <h1>Statut des services Capiomont</h1>
+        <p>Tableau de bord de l'état opérationnel des services</p>
+    </header>
+    
+    <div class="container">
+        <div class="dashboard">
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">État des services</h2>
+                <div class="last-updated" id="last-updated">Dernière vérification : --</div>
+            </div>
+            
+            <div class="status-grid" id="status-grid"></div>
+            
+            <button class="refresh-button" onclick="checkAllSites()">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                Actualiser
+            </button>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>© <span id="year"></span> Capiomont - Tous droits réservés</p>
+    </footer>
+    
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+        const sites = [
+            { name: "Capiomont", url: "https://capiomont.fr", manualStatus: "Maintenance" },
+            { name: "NAS", url: "https://nas.capiomont.fr", manualStatus: "unknown" },
+            { name: "Tierlist", url: "https://tierlist.capiomont.fr", manualStatus: "unknown" },
+            { name: "Contributors", url: "https://contributors.capiomont.fr", manualStatus: "unknown" },
+            { name: "Chat", url: "https://chat.capiomont.fr", manualStatus: "unknown" }
+        ];
+        const workerUrl = "https://statuts-direct2adb3.capiomont.workers.dev/"; 
+
+        // Fonction pour afficher l'écran de chargement
+        function showLoading() {
+            document.getElementById('loading-overlay').style.visibility = 'visible';
+            document.getElementById('loading-overlay').style.opacity = '1';
+        }
+        
+        // Fonction pour masquer l'écran de chargement
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.visibility = 'hidden';
+            }, 500); // Attendre la fin de l'animation
+        }
+
+        async function checkSiteStatus(site) {
+            if (site.manualStatus && site.manualStatus !== "unknown") {
+                site.status = site.manualStatus;
+                site.httpCode = site.manualStatus === "online" ? 200 : "503";
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${workerUrl}?url=${encodeURIComponent(site.url)}`);
+                const data = await response.json();
+                site.status = data.status === 200 ? "online" : "offline";
+                site.httpCode = data.status;
+            } catch (error) {
+                site.status = "ERR";
+                site.httpCode = "Verification Impossible";
+            }
+        }
+
+        async function checkAllSites() {
+            showLoading();
+            document.querySelector('.refresh-button').disabled = true;
+            
+            await Promise.all(sites.map(checkSiteStatus));
+            renderStatusCards();
+            
+            const now = new Date();
+            document.getElementById("last-updated").textContent = 
+                `Dernière vérification : ${now.toLocaleTimeString()}`;
+            
+            document.querySelector('.refresh-button').disabled = false;
+            hideLoading();
+        }
+
+        function renderStatusCards() {
+            const container = document.getElementById("status-grid");
+            container.innerHTML = "";
+            
+            sites.forEach(site => {
+                const card = document.createElement("div");
+                card.className = `status-card ${site.status}`;
+                
+                let statusText = site.status;
+                if (site.status === "online") statusText = "En ligne";
+                if (site.status === "offline") statusText = "Hors ligne";
+                
+                card.innerHTML = `
+                    <div class="card-decoration"></div>
+                    <div class="site-name">${site.name}</div>
+                    <div class="site-url">${site.url}</div>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <div class="status-text">${statusText}</div>
+                    </div>
+                    <div class="http-code">Code: ${site.httpCode || 'N/A'}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", checkAllSites);
+    </script>
+</body>
+</html>
