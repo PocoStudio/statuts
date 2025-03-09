@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statut des services Capiomont</title>
     <link rel="icon" href="https://www.svgrepo.com/show/419299/geometric-hearbeat-heart.svg" type="image/x-icon">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         :root {
             --color-bg: #f0f4f8;
@@ -274,6 +277,14 @@
         .loading-text {
             color: var(--color-text);
             font-weight: 500;
+            text-align: center;
+        }
+        
+        .loading-subtext {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
         }
         
         @keyframes spin {
@@ -305,6 +316,13 @@
                 gap: 0.5rem;
             }
         }
+
+        .error-message {
+            color: var(--color-offline);
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -312,6 +330,7 @@
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Vérification des services en cours...</div>
+        <div class="loading-subtext">Cela peut durer quelques instants...</div>
     </div>
     
     <header class="header">
@@ -327,6 +346,7 @@
             </div>
             
             <div class="status-grid" id="status-grid"></div>
+            <div id="error-container"></div>
             
             <button class="refresh-button" onclick="checkAllSites()">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -351,11 +371,14 @@
             { name: "Chat", url: "https://chat.capiomont.fr", manualStatus: "unknown" }
         ];
         const workerUrl = "https://statuts-direct2adb3.capiomont.workers.dev/"; 
+        const TIMEOUT_MS = 10000; // 10 secondes de timeout
+        const MAX_RETRIES = 2;
 
         // Fonction pour afficher l'écran de chargement
         function showLoading() {
             document.getElementById('loading-overlay').style.visibility = 'visible';
             document.getElementById('loading-overlay').style.opacity = '1';
+            document.getElementById('error-container').innerHTML = '';
         }
         
         // Fonction pour masquer l'écran de chargement
@@ -366,7 +389,29 @@
             }, 500); // Attendre la fin de l'animation
         }
 
-        async function checkSiteStatus(site) {
+        // Fonction pour vider le cache
+        function clearCache() {
+            // Ajouter un paramètre aléatoire à l'URL pour forcer le rechargement
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    cacheNames.forEach(cacheName => {
+                        caches.delete(cacheName);
+                    });
+                });
+            }
+            
+            // Force le navigateur à ne pas utiliser le cache
+            const currentUrl = window.location.href.split('?')[0];
+            const timestamp = new Date().getTime();
+            const newUrl = `${currentUrl}?nocache=${timestamp}`;
+            
+            // Ne change pas l'URL visible mais force le rafraîchissement
+            window.history.replaceState(null, document.title, newUrl);
+        }
+
+        // Fonction pour vérifier un site avec timeout et retries
+        async function checkSiteStatusWithRetry(site, retryCount = 0) {
+            // Si le statut est manuellement défini et n'est pas unknown, on utilise cette valeur
             if (site.manualStatus && site.manualStatus !== "unknown") {
                 site.status = site.manualStatus;
                 site.httpCode = site.manualStatus === "online" ? 200 : "503";
@@ -374,13 +419,32 @@
             }
             
             try {
-                const response = await fetch(`${workerUrl}?url=${encodeURIComponent(site.url)}`);
+                // Créer une promesse avec timeout
+                const fetchPromise = fetch(`${workerUrl}?url=${encodeURIComponent(site.url)}`);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), TIMEOUT_MS)
+                );
+                
+                // Course entre fetch et timeout
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
                 const data = await response.json();
+                
                 site.status = data.status === 200 ? "online" : "offline";
                 site.httpCode = data.status;
             } catch (error) {
+                // Si on a encore des essais disponibles et c'est un timeout, on réessaie
+                if (retryCount < MAX_RETRIES && error.message === 'Timeout') {
+                    console.log(`Essai ${retryCount + 1} pour ${site.url} a échoué. Nouvel essai...`);
+                    return await checkSiteStatusWithRetry(site, retryCount + 1);
+                }
+                
                 site.status = "ERR";
                 site.httpCode = "Verification Impossible";
+                
+                // Si c'est le dernier essai et qu'on a toujours un échec
+                if (retryCount === MAX_RETRIES) {
+                    console.error(`Tous les essais (${MAX_RETRIES + 1}) pour ${site.url} ont échoué.`);
+                }
             }
         }
 
@@ -388,15 +452,29 @@
             showLoading();
             document.querySelector('.refresh-button').disabled = true;
             
-            await Promise.all(sites.map(checkSiteStatus));
-            renderStatusCards();
+            // Vider le cache avant de recharger
+            clearCache();
             
-            const now = new Date();
-            document.getElementById("last-updated").textContent = 
-                `Dernière vérification : ${now.toLocaleTimeString()}`;
-            
-            document.querySelector('.refresh-button').disabled = false;
-            hideLoading();
+            try {
+                await Promise.all(sites.map(site => checkSiteStatusWithRetry(site)));
+                renderStatusCards();
+                
+                const now = new Date();
+                document.getElementById("last-updated").textContent = 
+                    `Dernière vérification : ${now.toLocaleTimeString()}`;
+            } catch (error) {
+                console.error("Erreur lors de la vérification des services:", error);
+                const errorContainer = document.getElementById("error-container");
+                errorContainer.innerHTML = `
+                    <div class="error-message">
+                        Une erreur est survenue lors de la vérification des services. 
+                        Veuillez réessayer ultérieurement.
+                    </div>
+                `;
+            } finally {
+                document.querySelector('.refresh-button').disabled = false;
+                hideLoading();
+            }
         }
 
         function renderStatusCards() {
@@ -410,6 +488,9 @@
                 let statusText = site.status;
                 if (site.status === "online") statusText = "En ligne";
                 if (site.status === "offline") statusText = "Hors ligne";
+                if (site.status === "Maintenance") statusText = "Maintenance";
+                if (site.status === "unknown") statusText = "Inconnu";
+                if (site.status === "ERR") statusText = "Erreur";
                 
                 card.innerHTML = `
                     <div class="card-decoration"></div>
