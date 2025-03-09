@@ -369,6 +369,7 @@
                 const response = await fetch(`${workerUrl}?url=${encodeURIComponent(site.url)}`);
                 const data = await response.json();
                 site.status = data.status === 200 ? "online" : "offline";
+                if (data.status === 503) site.status = "Maintenance";
                 site.httpCode = data.status;
             } catch (error) {
                 site.status = "ERR";
