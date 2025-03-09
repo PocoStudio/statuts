@@ -123,6 +123,12 @@
             margin-bottom: 1.2rem;
             word-break: break-all;
         }
+
+        .link {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
         
         .status-indicator {
             display: flex;
@@ -407,7 +413,7 @@
                 card.innerHTML = `
                     <div class="card-decoration"></div>
                     <div class="site-name">${site.name}</div>
-                    <div class="site-url">${site.url}</div>
+                    <div class="site-url"><a class="link" href="${site.url}">${site.url}</a></div>
                     <div class="status-indicator">
                         <div class="status-dot"></div>
                         <div class="status-text">${statusText}</div>
