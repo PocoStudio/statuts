@@ -373,11 +373,12 @@
     <script>
         document.getElementById("year").textContent = new Date().getFullYear();
         const sites = [
-            { name: "Capiomont", url: "https://capiomont.fr", manualStatus: "Maintenance" },
+            { name: "Capiomont", url: "https://capiomont.fr", manualStatus: "unknown" },
             { name: "NAS", url: "https://nas.capiomont.fr", manualStatus: "unknown" },
             { name: "Tierlist", url: "https://tierlist.capiomont.fr", manualStatus: "unknown" },
             { name: "Contributors", url: "https://contributors.capiomont.fr", manualStatus: "unknown" },
-            { name: "Chat", url: "https://chat.capiomont.fr", manualStatus: "unknown" }
+            { name: "Chat", url: "https://chat.capiomont.fr", manualStatus: "unknown" },
+            { name: "Chat", url: "https://cleanphoto.capiomont.fr", manualStatus: "unknown" }
         ];
         const workerUrl = "https://statuts-direct2adb3.capiomont.workers.dev/"; 
         const TIMEOUT_MS = 10000; // 10 secondes de timeout
