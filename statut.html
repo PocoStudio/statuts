@@ -439,7 +439,15 @@
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
                 const data = await response.json();
                 
-                site.status = data.status === 200 ? "online" : "offline";
+                if(data.status === 200){
+                    site.status = "online";
+                }
+                else if(data.status === 305){
+                    site.status = "Maintenance";
+                }
+                else {
+                    site.status = "offline";
+                }
                 site.httpCode = data.status;
             } catch (error) {
                 // Si on a encore des essais disponibles et c'est un timeout, on réessaie
